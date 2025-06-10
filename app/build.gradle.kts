@@ -51,7 +51,9 @@ dependencies {
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.ui)
     implementation(libs.google.play.services.auth)
-
+    implementation(libs.vico.compose.m3)
+    implementation(libs.vico.compose)
+    implementation(libs.vico.core)
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)

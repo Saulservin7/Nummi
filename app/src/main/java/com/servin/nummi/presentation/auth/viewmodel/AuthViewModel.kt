@@ -8,6 +8,7 @@ import com.servin.nummi.domain.usecase.auth.RegisterUseCase
 import com.servin.nummi.domain.usecase.auth.SignInWithGoogleUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -40,9 +41,24 @@ class AuthViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(AuthScreenState())
     val uiState = _uiState.asStateFlow() // La UI observará este único estado
 
+    private val _isUserAuthenticated = MutableStateFlow<Boolean?>(null)
+
+    // isUserAuthenticated es la versión pública y de solo lectura del StateFlow.
+    // La UI observará este Flow para reaccionar a los cambios de estado de autenticación.
+    val isUserAuthenticated: StateFlow<Boolean?> = _isUserAuthenticated.asStateFlow()
+
 
     init {
         getCurrentUser()
+        viewModelScope.launch {
+            // Se invoca el caso de uso para obtener el usuario actual.
+            // Esto es una llamada única que devuelve el usuario de Firebase si existe una sesión activa.
+            val currentUser = getCurrentUserUseCase()
+
+            // Actualizamos el valor de nuestro StateFlow.
+            // Si currentUser no es nulo, significa que el usuario está logueado.
+            _isUserAuthenticated.value = currentUser != null
+        }
     }
 
     // 2. Las funciones de cambio ahora actualizan el estado unificado.
