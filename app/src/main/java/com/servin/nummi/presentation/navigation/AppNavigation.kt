@@ -16,28 +16,28 @@ fun AppNavigation() {
 
     NavHost(
         navController = navController,
-        startDestination = AppScreen.LoginScreen.route
+        startDestination = AppScreens.LoginScreen.route
     ) {
-        composable(route = AppScreen.LoginScreen.route) {
+        composable(route = AppScreens.LoginScreen.route) {
             LoginScreen(
                 onLoginSuccess = {
-                    navController.navigate(AppScreen.HomeScreen.route) {
-                        popUpTo(AppScreen.LoginScreen.route) {
+                    navController.navigate(AppScreens.HomeScreen.route) {
+                        popUpTo(AppScreens.LoginScreen.route) {
                             inclusive = true
                         }
                     }
                 },
-                onNavigateToRegister = { navController.navigate(AppScreen.RegisterScreen.route) }
+                onNavigateToRegister = { navController.navigate(AppScreens.RegisterScreen.route) }
             )
         }
 
 
-        composable(route = AppScreen.RegisterScreen.route) {
+        composable(route = AppScreens.RegisterScreen.route) {
             RegisterScreen(
                 onRegistrationSuccess = {
-                    navController.navigate(AppScreen.HomeScreen.route) {
+                    navController.navigate(AppScreens.HomeScreen.route) {
                         // Limpiamos la pila también aquí
-                        popUpTo(AppScreen.LoginScreen.route) {
+                        popUpTo(AppScreens.LoginScreen.route) {
                             inclusive = true
                         }
                     }
@@ -50,8 +50,10 @@ fun AppNavigation() {
             )
         }
 
-        composable(route = AppScreen.HomeScreen.route) {
-            HomeScreen()
+        composable(route = AppScreens.HomeScreen.route) {
+            HomeScreen(
+
+            )
         }
     }
 }

@@ -1,7 +1,8 @@
 package com.servin.nummi.presentation.navigation
 
-sealed class AppScreen(val route:String){
-    object LoginScreen : AppScreen("login_screen")
-    object RegisterScreen : AppScreen("register_screen")
-    object HomeScreen : AppScreen("home_screen")
+sealed class AppScreens(val route:String){
+    object SplashScreen: AppScreens("splash_screen")
+    object LoginScreen: AppScreens("login_screen")
+    object RegisterScreen: AppScreens("register_screen")
+    object HomeScreen: AppScreens("home_screen")
 }
