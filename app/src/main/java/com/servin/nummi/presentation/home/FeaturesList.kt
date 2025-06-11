@@ -12,7 +12,7 @@ val features = listOf(
     HomeFeature(
         title = "Historial de Transacciones",
         iconRes = R.drawable.ic_transactionhome,
-        route = AppScreens.AddTransactionScreen.route
+        route = AppScreens.TransactionListScreen.route
     ),
     HomeFeature(
         title = "Cargar Facturas",

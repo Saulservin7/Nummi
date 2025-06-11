@@ -11,6 +11,7 @@ import com.servin.nummi.presentation.home.HomeScreen
 import com.servin.nummi.presentation.home.features
 import com.servin.nummi.presentation.splash.SplashScreen // 1. Importamos nuestra nueva SplashScreen.
 import com.servin.nummi.presentation.transaction.AddTransactionScreen
+import com.servin.nummi.presentation.transactionlist.TransactionListScreen
 
 @Composable
 fun AppNavigation() {
@@ -73,6 +74,9 @@ fun AppNavigation() {
         }
         composable(route = AppScreens.AddTransactionScreen.route) {
             AddTransactionScreen()
+        }
+        composable(route = AppScreens.TransactionListScreen.route) {
+            TransactionListScreen()
         }
     }
 }

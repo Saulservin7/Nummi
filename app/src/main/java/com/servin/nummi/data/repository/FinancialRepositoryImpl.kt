@@ -3,6 +3,7 @@ package com.servin.nummi.data.repository
 
 import com.google.firebase.auth.FirebaseAuth // 1. Importamos FirebaseAuth.
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.toObjects
 import com.servin.nummi.domain.model.Transaction
 import com.servin.nummi.domain.repository.FinancialRepository
@@ -55,7 +56,7 @@ class FinancialRepositoryImpl @Inject constructor(
             // Escuchamos cambios en TIEMPO REAL en la colección de transacciones del usuario.
             val listener = firestore.collection("users")
                 .document(currentUserId)
-                .collection("transactions")
+                .collection("transactions").orderBy("date",Query.Direction.DESCENDING)
                 .addSnapshotListener { snapshot, error ->
                     if (error != null) {
                         // Si hay un error de Firestore, lo enviamos al Flow.
