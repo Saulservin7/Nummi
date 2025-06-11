@@ -26,7 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.servin.nummi.R
-import com.servin.nummi.presentation.auth.viewmodel.AuthScreenState
+import com.servin.nummi.domain.model.AuthScreenState
 import com.servin.nummi.presentation.auth.viewmodel.AuthViewModel
 import com.servin.nummi.ui.theme.GreenNummi
 import com.servin.nummi.ui.theme.NummiTheme

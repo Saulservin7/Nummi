@@ -2,6 +2,7 @@ package com.servin.nummi.presentation.auth.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.servin.nummi.domain.model.AuthScreenState
 import com.servin.nummi.domain.usecase.auth.GetCurrentUserUseCase
 import com.servin.nummi.domain.usecase.auth.LoginUseCase
 import com.servin.nummi.domain.usecase.auth.RegisterUseCase
@@ -14,20 +15,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-// 1. Unimos todo el estado de la pantalla en una sola clase.
-data class AuthScreenState(
-    // Estado de los inputs
-    val name: String = "",
-    val email: String = "",
-    val password: String = "",
 
-    // Estado del resultado de la operación
-    val isLoading: Boolean = false,
-    val error: String? = null,
-    val registrationSuccess: Boolean = false,
-    val loginSuccess: Boolean = false,
-    val authenticationSuccess: Boolean = false
-)
+
 
 @HiltViewModel
 class AuthViewModel @Inject constructor(
