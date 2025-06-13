@@ -27,7 +27,7 @@ val features = listOf(
     HomeFeature(
         title = "Metas de Ahorro",
         iconRes = R.drawable.ic_transactionhome,
-        route = AppScreens.AddTransactionScreen.route
+        route = AppScreens.SavingsGoalsScreen.route
     ),
     HomeFeature(
         title = "Cuentas y Tarjetas",

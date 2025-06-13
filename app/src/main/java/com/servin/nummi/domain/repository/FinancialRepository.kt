@@ -1,5 +1,6 @@
 package com.servin.nummi.domain.repository
 
+import com.servin.nummi.domain.model.SavingGoal
 import com.servin.nummi.domain.model.Transaction
 import kotlinx.coroutines.flow.Flow
 
@@ -20,4 +21,7 @@ interface FinancialRepository {
      * Esto es mucho más seguro que no devolver nada.
      */
     suspend fun addTransaction(transaction: Transaction): Result<Unit>
+
+    suspend fun addSavingGoal(savingGoal: SavingGoal): Result<Unit>
+    suspend fun getSavingGoals(): Flow<Result<List<SavingGoal>>>
 }

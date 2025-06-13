@@ -5,6 +5,7 @@ import com.google.firebase.auth.FirebaseAuth // 1. Importamos FirebaseAuth.
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.toObjects
+import com.servin.nummi.domain.model.SavingGoal
 import com.servin.nummi.domain.model.Transaction
 import com.servin.nummi.domain.repository.FinancialRepository
 import kotlinx.coroutines.channels.awaitClose
@@ -56,7 +57,7 @@ class FinancialRepositoryImpl @Inject constructor(
             // Escuchamos cambios en TIEMPO REAL en la colección de transacciones del usuario.
             val listener = firestore.collection("users")
                 .document(currentUserId)
-                .collection("transactions").orderBy("date",Query.Direction.DESCENDING)
+                .collection("transactions").orderBy("date", Query.Direction.DESCENDING)
                 .addSnapshotListener { snapshot, error ->
                     if (error != null) {
                         // Si hay un error de Firestore, lo enviamos al Flow.
@@ -76,6 +77,50 @@ class FinancialRepositoryImpl @Inject constructor(
 
         } catch (e: Exception) {
             // Enviamos cualquier otra excepción que pueda ocurrir.
+            trySend(Result.failure(e))
+        }
+    }
+
+    override suspend fun addSavingGoal(savingGoal: SavingGoal): Result<Unit> {
+        return try {
+            val currentUserId = userId ?: throw IllegalStateException("Usuario no autenticado.")
+
+            val documentRef = firestore.collection("users")
+                .document(currentUserId)
+                .collection("savingGoals")
+                .document()
+
+            val savingGoalWithId = savingGoal.copy(id = documentRef.id)
+
+            documentRef.set(savingGoalWithId).await()
+
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun getSavingGoals(): Flow<Result<List<SavingGoal>>> = callbackFlow {
+        try {
+            val currentUserId = userId ?: throw IllegalStateException("Usuario no autenticado.")
+
+            val listener = firestore.collection("users")
+                .document(currentUserId)
+                .collection("savingGoals").orderBy("date", Query.Direction.DESCENDING)
+                .addSnapshotListener { snapshot, error ->
+                    if (error != null) {
+                        trySend(Result.failure(error))
+                        return@addSnapshotListener
+                    }
+                    if (snapshot != null) {
+                        val savingGoals =
+                            snapshot.toObjects<SavingGoal>() // Changed Transaction to SavingGoal
+                        trySend(Result.success(savingGoals))
+                    }
+                }
+            awaitClose { listener.remove() }
+
+        } catch (e: Exception) {
             trySend(Result.failure(e))
         }
     }

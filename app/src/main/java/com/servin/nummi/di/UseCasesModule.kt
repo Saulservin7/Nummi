@@ -1,6 +1,8 @@
 package com.servin.nummi.di
 
 import com.servin.nummi.domain.repository.FinancialRepository
+import com.servin.nummi.domain.usecase.savings.AddSavingGoalUseCase
+import com.servin.nummi.domain.usecase.savings.GetSavingGoalUseCase
 import com.servin.nummi.domain.usecase.transactions.AddTransactionUseCase
 import com.servin.nummi.domain.usecase.transactions.GetTransactionsUseCase
 import dagger.Module
@@ -26,4 +28,15 @@ object UseCasesModule {
     fun provideAddTransactionUseCase(repository: FinancialRepository): AddTransactionUseCase {
         return AddTransactionUseCase(repository)
     }
+
+    @Provides
+    fun provideAddSavingGoalUseCase(repository: FinancialRepository): AddSavingGoalUseCase {
+        return AddSavingGoalUseCase(repository)
+    }
+
+    @Provides
+    fun provideGetSavingGoalsUseCase(repository: FinancialRepository): GetSavingGoalUseCase {
+        return GetSavingGoalUseCase(repository)
+    }
+
 }

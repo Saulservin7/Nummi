@@ -65,6 +65,7 @@ dependencies {
     implementation(libs.hilt.navigation.compose)
     implementation(libs.firebase.crashlytics.buildtools)
     implementation(libs.firebase.firestore)
+    implementation(libs.ads.mobile.sdk)
     ksp(libs.dagger.compiler)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

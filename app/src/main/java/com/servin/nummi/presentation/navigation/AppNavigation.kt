@@ -9,6 +9,7 @@ import com.servin.nummi.presentation.auth.screens.LoginScreen
 import com.servin.nummi.presentation.auth.screens.RegisterScreen
 import com.servin.nummi.presentation.home.HomeScreen
 import com.servin.nummi.presentation.home.features
+import com.servin.nummi.presentation.saving.SavingGoalsScreen
 import com.servin.nummi.presentation.splash.SplashScreen // 1. Importamos nuestra nueva SplashScreen.
 import com.servin.nummi.presentation.transaction.AddTransactionScreen
 import com.servin.nummi.presentation.transactionlist.TransactionListScreen
@@ -77,6 +78,9 @@ fun AppNavigation() {
         }
         composable(route = AppScreens.TransactionListScreen.route) {
             TransactionListScreen()
+        }
+        composable(route = AppScreens.SavingsGoalsScreen.route) {
+            SavingGoalsScreen()
         }
     }
 }
