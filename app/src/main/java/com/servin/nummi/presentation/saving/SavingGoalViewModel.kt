@@ -3,13 +3,20 @@ package com.servin.nummi.presentation.saving
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.servin.nummi.domain.model.Budget // Import Budget
+import com.servin.nummi.domain.model.Priority
+import com.servin.nummi.domain.model.Salary // Import Salary
 import com.servin.nummi.domain.model.SavingGoal
+import com.servin.nummi.domain.usecase.budget.GetBudgetUseCase // Import GetBudgetUseCase
+import com.servin.nummi.domain.usecase.salary.GetSalaryUseCase // Import GetSalaryUseCase
 import com.servin.nummi.domain.usecase.savings.AddSavingGoalUseCase
 import com.servin.nummi.domain.usecase.savings.GetSavingGoalUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.launchIn // Import launchIn
+import kotlinx.coroutines.flow.onEach // Import onEach
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -29,7 +36,9 @@ sealed interface LoadSavingGoalsState {
 @HiltViewModel
 class SavingGoalViewModel @Inject constructor(
     private val addSavingGoalUseCase: AddSavingGoalUseCase,
-    private val getSavingGoalUseCase: GetSavingGoalUseCase
+    private val getSavingGoalUseCase: GetSavingGoalUseCase,
+    private val getSalaryUseCase: GetSalaryUseCase, // Injected GetSalaryUseCase
+    private val getBudgetUseCase: GetBudgetUseCase // Injected GetBudgetUseCase
 ) : ViewModel() {
 
     private val _savingGoals = MutableStateFlow<List<SavingGoal>>(emptyList())
@@ -41,8 +50,19 @@ class SavingGoalViewModel @Inject constructor(
     private val _loadGoalsState = MutableStateFlow<LoadSavingGoalsState>(LoadSavingGoalsState.Loading)
     val loadGoalsState: StateFlow<LoadSavingGoalsState> = _loadGoalsState.asStateFlow()
 
+    private val _currentBudget = MutableStateFlow<Budget?>(null)
+    val currentBudget: StateFlow<Budget?> = _currentBudget.asStateFlow()
+
+    private val _biWeeklySalary = MutableStateFlow<Double?>(null)
+    val biWeeklySalary: StateFlow<Double?> = _biWeeklySalary.asStateFlow()
+
+    private val _totalSavingGoalsAmount = MutableStateFlow<Double>(0.0)
+    val totalSavingGoalsAmount: StateFlow<Double> = _totalSavingGoalsAmount.asStateFlow()
+
     init {
         loadSavingGoals()
+        loadCurrentBudget()
+        loadBiWeeklySalary()
     }
 
     private fun loadSavingGoals() {
@@ -52,6 +72,7 @@ class SavingGoalViewModel @Inject constructor(
                 result.fold(
                     onSuccess = { goals ->
                         _savingGoals.value = goals
+                        _totalSavingGoalsAmount.value = goals.sumOf { it.targetAmount } // Calculate total
                         _loadGoalsState.value = LoadSavingGoalsState.Success
                     },
                     onFailure = { exception ->
@@ -64,7 +85,36 @@ class SavingGoalViewModel @Inject constructor(
         }
     }
 
-    fun addSavingGoal(name: String, targetAmountStr: String, currentAmountStr: String) {
+    private fun loadCurrentBudget() {
+        viewModelScope.launch { // Corrected: Wrap in viewModelScope.launch
+            getBudgetUseCase().onEach { result ->
+                result.fold(
+                    onSuccess = { budget -> _currentBudget.value = budget },
+                    onFailure = { _currentBudget.value = null /* Handle error appropriately */ }
+                )
+            }.launchIn(viewModelScope)
+        }
+    }
+
+    private fun loadBiWeeklySalary() {
+        viewModelScope.launch { // Corrected: Wrap in viewModelScope.launch
+            getSalaryUseCase().onEach { result ->
+                result.fold(
+                    onSuccess = { salary ->
+                        _biWeeklySalary.value = salary?.monthlySalary?.div(2)
+                    },
+                    onFailure = { _biWeeklySalary.value = null /* Handle error appropriately */ }
+                )
+            }.launchIn(viewModelScope)
+        }
+    }
+
+    fun addSavingGoal(
+        name: String,
+        targetAmountStr: String,
+        currentAmountStr: String,
+        priority: Priority
+    ) {
         viewModelScope.launch {
             _addGoalState.value = AddSavingGoalState.Loading
             val targetAmount = targetAmountStr.toDoubleOrNull()
@@ -92,7 +142,8 @@ class SavingGoalViewModel @Inject constructor(
             val newGoal = SavingGoal(
                 name = name,
                 targetAmount = targetAmount,
-                currentAmount = currentAmount
+                currentAmount = currentAmount,
+                priority = priority
                 // id and date will be handled by repository/data class default
             )
 
@@ -101,7 +152,9 @@ class SavingGoalViewModel @Inject constructor(
                 onSuccess = {
                     _addGoalState.value =
                         AddSavingGoalState.Success("Saving goal added successfully!")
-                    // The list will update automatically due to Firestore's real-time listener
+                    // Optionally, you might want to reload or update the goals list here
+                    // to reflect the new total immediately after adding a goal.
+                    // For now, it will update when loadSavingGoals is next called (e.g. on screen init)
                 },
                 onFailure = { exception ->
                     _addGoalState.value =

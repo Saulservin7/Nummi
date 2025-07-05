@@ -1,5 +1,6 @@
 package com.servin.nummi.presentation.saving
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,6 +16,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -23,6 +25,7 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -50,10 +53,13 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.servin.nummi.R // Asegúrate de tener un ícono de 'add' en tus recursos
+import com.servin.nummi.domain.model.Budget // Import Budget for type hint
+import com.servin.nummi.domain.model.Priority // Import Priority
 import com.servin.nummi.domain.model.SavingGoal
 import com.servin.nummi.ui.theme.NummiTheme
 import java.text.NumberFormat
 import java.util.Locale
+import kotlin.math.ceil // Import ceil
 
 // Formateador de moneda para mostrar los montos de forma clara.
 private fun formatCurrency(amount: Double): String {
@@ -68,10 +74,12 @@ fun SavingGoalsScreen(
     val savingGoals by viewModel.savingGoals.collectAsStateWithLifecycle()
     val addGoalState by viewModel.addGoalState.collectAsStateWithLifecycle()
     val loadGoalsState by viewModel.loadGoalsState.collectAsStateWithLifecycle()
+    val currentBudget by viewModel.currentBudget.collectAsStateWithLifecycle()
+    val biWeeklySalary by viewModel.biWeeklySalary.collectAsStateWithLifecycle()
+    val totalSavingGoalsAmount by viewModel.totalSavingGoalsAmount.collectAsStateWithLifecycle() // Collect total
 
     val snackbarHostState = remember { SnackbarHostState() }
 
-    // Observa el estado de `addGoalState` para mostrar Snackbars y luego resetear el estado.
     LaunchedEffect(addGoalState) {
         when (val state = addGoalState) {
             is AddSavingGoalState.Success -> {
@@ -115,8 +123,8 @@ fun SavingGoalsScreen(
             if (showDialog) {
                 AddSavingGoalDialog(
                     onDismissRequest = { showDialog = false },
-                    onConfirm = { name, target, current ->
-                        viewModel.addSavingGoal(name, target, current)
+                    onConfirm = { name, target, current, priority -> // Added priority
+                        viewModel.addSavingGoal(name, target, current, priority) // Pass priority
                         showDialog = false
                     },
                     addState = addGoalState
@@ -124,34 +132,113 @@ fun SavingGoalsScreen(
             }
         }
     ) { paddingValues ->
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues),
-            contentAlignment = Alignment.Center
+                .padding(paddingValues)
+                .padding(horizontal = 16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            when (loadGoalsState) {
-                is LoadSavingGoalsState.Loading -> {
-                    CircularProgressIndicator()
-                }
-                is LoadSavingGoalsState.Error -> {
+            // Display Total Saving Goals Amount
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp),
+                elevation = CardDefaults.cardElevation(2.dp)
+            ) {
+                Column(modifier = Modifier.padding(12.dp)) {
                     Text(
-                        text = (loadGoalsState as LoadSavingGoalsState.Error).message,
-                        color = MaterialTheme.colorScheme.error,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(16.dp)
+                        text = "Suma Total de Metas de Ahorro:",
+                        style = MaterialTheme.typography.titleSmall
+                    )
+                    Text(
+                        text = formatCurrency(totalSavingGoalsAmount),
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.secondary // Or another distinct color
                     )
                 }
-                is LoadSavingGoalsState.Success -> {
-                    if (savingGoals.isEmpty()) {
+            }
+
+            // Display Bi-Weekly Salary
+            biWeeklySalary?.let { salaryAmount ->
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp),
+                    elevation = CardDefaults.cardElevation(2.dp)
+                ) {
+                    Column(modifier = Modifier.padding(12.dp)) {
                         Text(
-                            text = "Aún no tienes metas de ahorro.\n¡Presiona el botón '+' para añadir una!",
-                            style = MaterialTheme.typography.bodyLarge,
+                            text = "Salario Quincenal Estimado:",
+                            style = MaterialTheme.typography.titleSmall
+                        )
+                        Text(
+                            text = formatCurrency(salaryAmount),
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+            }
+
+            // Display Current Budget
+            currentBudget?.let { budget ->
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp),
+                    elevation = CardDefaults.cardElevation(2.dp)
+                ) {
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        Text(
+                            text = "Presupuesto Actual:",
+                            style = MaterialTheme.typography.titleSmall
+                        )
+                        Text(
+                            text = formatCurrency(budget.currentBudget),
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                when (loadGoalsState) {
+                    is LoadSavingGoalsState.Loading -> {
+                        CircularProgressIndicator()
+                    }
+                    is LoadSavingGoalsState.Error -> {
+                        Text(
+                            text = (loadGoalsState as LoadSavingGoalsState.Error).message,
+                            color = MaterialTheme.colorScheme.error,
                             textAlign = TextAlign.Center,
                             modifier = Modifier.padding(16.dp)
                         )
-                    } else {
-                        SavingGoalsList(goals = savingGoals)
+                    }
+                    is LoadSavingGoalsState.Success -> {
+                        if (savingGoals.isEmpty()) {
+                            Text(
+                                text = "Aún no tienes metas de ahorro.¡Presiona el botón '+' para añadir una!",
+                                style = MaterialTheme.typography.bodyLarge,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.padding(16.dp)
+                            )
+                        } else {
+                            SavingGoalsList(
+                                goals = savingGoals,
+                                currentBudget = currentBudget,
+                                biWeeklySalary = biWeeklySalary
+                            )
+                        }
                     }
                 }
             }
@@ -160,30 +247,61 @@ fun SavingGoalsScreen(
 }
 
 @Composable
-fun SavingGoalsList(goals: List<SavingGoal>) {
+fun SavingGoalsList(
+    goals: List<SavingGoal>,
+    currentBudget: Budget?,
+    biWeeklySalary: Double?
+) {
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .padding(8.dp)
     ) {
-        items(goals) { goal ->
-            SavingGoalItem(goal = goal, modifier = Modifier.padding(vertical = 8.dp))
+        items(goals, key = { it.id }) { goal ->
+            SavingGoalItem(
+                goal = goal,
+                currentBudget = currentBudget,
+                biWeeklySalary = biWeeklySalary,
+                modifier = Modifier.padding(vertical = 8.dp)
+            )
         }
     }
 }
 
 @Composable
-fun SavingGoalItem(goal: SavingGoal, modifier: Modifier = Modifier) {
+fun SavingGoalItem(
+    goal: SavingGoal,
+    currentBudget: Budget?,
+    biWeeklySalary: Double?,
+    modifier: Modifier = Modifier
+) {
     Card(
         modifier = modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = goal.name,
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = goal.name,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = goal.priority.name, // Display priority
+                    style = MaterialTheme.typography.labelSmall,
+                    color = when (goal.priority) {
+                        Priority.HIGH -> MaterialTheme.colorScheme.error
+                        Priority.MEDIUM -> MaterialTheme.colorScheme.tertiary
+                        Priority.LOW -> MaterialTheme.colorScheme.secondary
+                    },
+                    modifier = Modifier
+                        .padding(start = 8.dp)
+                )
+            }
             Spacer(modifier = Modifier.height(8.dp))
 
             val progress = if (goal.targetAmount > 0) {
@@ -214,6 +332,28 @@ fun SavingGoalItem(goal: SavingGoal, modifier: Modifier = Modifier) {
                     color = Color.Gray
                 )
             }
+            Spacer(modifier = Modifier.height(8.dp)) // Spacer before the new message
+
+            // Affordability Message
+            val remainingAmount = goal.targetAmount - goal.currentAmount
+            val affordabilityMessage = when {
+                currentBudget != null && remainingAmount <= currentBudget.currentBudget -> {
+                    "Se puede satisfacer con el presupuesto actual."
+                }
+                biWeeklySalary != null && biWeeklySalary > 0 && remainingAmount > 0 -> {
+                    val periods = ceil(remainingAmount / biWeeklySalary).toInt()
+                    "Hasta dentro de $periods quincena(s)."
+                }
+                else -> {
+                    "El cronograma depende del salario quincenal."
+                }
+            }
+            Text(
+                text = affordabilityMessage,
+                style = MaterialTheme.typography.bodySmall,
+                textAlign = TextAlign.End,
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
 }
@@ -221,12 +361,13 @@ fun SavingGoalItem(goal: SavingGoal, modifier: Modifier = Modifier) {
 @Composable
 fun AddSavingGoalDialog(
     onDismissRequest: () -> Unit,
-    onConfirm: (name: String, target: String, current: String) -> Unit,
+    onConfirm: (name: String, target: String, current: String, priority: Priority) -> Unit, // Added priority
     addState: AddSavingGoalState
 ) {
     var name by rememberSaveable { mutableStateOf("") }
     var targetAmount by rememberSaveable { mutableStateOf("") }
     var currentAmount by rememberSaveable { mutableStateOf("") }
+    var selectedPriority by rememberSaveable { mutableStateOf(Priority.MEDIUM) } // State for priority
 
     AlertDialog(
         onDismissRequest = onDismissRequest,
@@ -253,11 +394,17 @@ fun AddSavingGoalDialog(
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     prefix = { Text("$") }
                 )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text("Prioridad:", style = MaterialTheme.typography.labelLarge)
+                PrioritySelector( // Assuming PrioritySelector is defined elsewhere or will be added
+                    selectedPriority = selectedPriority,
+                    onPrioritySelected = { selectedPriority = it }
+                )
             }
         },
         confirmButton = {
             Button(
-                onClick = { onConfirm(name, targetAmount, currentAmount) },
+                onClick = { onConfirm(name, targetAmount, currentAmount, selectedPriority) }, // Pass priority
                 enabled = addState !is AddSavingGoalState.Loading
             ) {
                 if (addState is AddSavingGoalState.Loading) {
@@ -275,43 +422,29 @@ fun AddSavingGoalDialog(
     )
 }
 
-// --- Previews ---
-
-@Preview(showBackground = true)
+// Dummy PrioritySelector - Replace with your actual implementation
 @Composable
-fun SavingGoalItemPreview() {
-    val sampleGoal = SavingGoal(
-        id = "1",
-        name = "Viaje a la playa",
-        targetAmount = 1000.0,
-        currentAmount = 450.0
-    )
-    NummiTheme {
-        SavingGoalItem(goal = sampleGoal)
+fun PrioritySelector(selectedPriority: Priority, onPrioritySelected: (Priority) -> Unit) {
+    Row {
+        Priority.values().forEach { priority ->
+            OutlinedButton(
+                onClick = { onPrioritySelected(priority) },
+                modifier = Modifier.padding(end = 8.dp),
+                border = BorderStroke(1.dp, if (selectedPriority == priority) MaterialTheme.colorScheme.primary else Color.Gray)
+            ) {
+                Text(priority.name)
+            }
+        }
     }
 }
 
 @Preview(showBackground = true)
 @Composable
-fun SavingGoalsListPreview() {
-    val sampleGoals = listOf(
-        SavingGoal(id = "1", name = "Viaje a la playa", targetAmount = 1000.0, currentAmount = 450.0),
-        SavingGoal(id = "2", name = "Nuevo Teléfono", targetAmount = 800.0, currentAmount = 800.0),
-        SavingGoal(id = "3", name = "Computadora Gamer", targetAmount = 2500.0, currentAmount = 500.0)
-    )
+fun SavingGoalsScreenPreview() {
     NummiTheme {
-        SavingGoalsList(goals = sampleGoals)
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun AddSavingGoalDialogPreview() {
-    NummiTheme {
-        AddSavingGoalDialog(
-            onDismissRequest = {},
-            onConfirm = { _, _, _ -> },
-            addState = AddSavingGoalState.Idle
-        )
+        // You'll need to mock a SavingGoalViewModel for this preview to be meaningful
+        // For now, it will use a default hiltViewModel() which might not work well in previews
+        // without proper Hilt setup for previews.
+        SavingGoalsScreen()
     }
 }

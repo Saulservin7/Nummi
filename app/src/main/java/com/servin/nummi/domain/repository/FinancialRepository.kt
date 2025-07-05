@@ -1,5 +1,8 @@
 package com.servin.nummi.domain.repository
 
+import com.servin.nummi.domain.model.Budget
+import com.servin.nummi.domain.model.PurchaseGoal
+import com.servin.nummi.domain.model.Salary
 import com.servin.nummi.domain.model.SavingGoal
 import com.servin.nummi.domain.model.Transaction
 import kotlinx.coroutines.flow.Flow
@@ -24,4 +27,20 @@ interface FinancialRepository {
 
     suspend fun addSavingGoal(savingGoal: SavingGoal): Result<Unit>
     suspend fun getSavingGoals(): Flow<Result<List<SavingGoal>>>
+
+    // Salary management functions
+    suspend fun saveSalary(salary: Salary): Result<Unit>
+    suspend fun getCurrentSalary(): Flow<Result<Salary?>>
+    suspend fun updateSalary(salary: Salary): Result<Unit>
+    suspend fun deleteSalary(salaryId: String): Result<Unit>
+
+    // Budget management functions
+    suspend fun saveBudget(budget: Budget): Result<Unit>
+    suspend fun getCurrentBudget(): Flow<Result<Budget?>>
+    suspend fun updateBudget(budget: Budget): Result<Unit>
+    suspend fun deleteBudget(budgetId: String): Result<Unit>
+
+    // PurchaseGoal management functions
+    suspend fun addPurchaseGoal(goal: PurchaseGoal): Result<Unit>
+    suspend fun getPurchaseGoals(): Flow<Result<List<PurchaseGoal>>>
 }
